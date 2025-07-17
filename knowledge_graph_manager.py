@@ -125,7 +125,8 @@ class KnowledgeGraphManager:
         
         for obs in observations:
             entity_name = obs['entityName']
-            contents = obs['contents']
+            # Handle both 'contents' and 'observations' keys for compatibility
+            contents = obs.get('contents', obs.get('observations', []))
             
             entity = next((e for e in graph.entities if e.name == entity_name), None)
             if not entity:

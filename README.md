@@ -1,130 +1,120 @@
-# Knowledge Graph MCP Server - FastAPI
+# Servidor MCP de Grafo de Conocimiento
 
-Esta es una migración del servidor MCP (Model Context Protocol) de TypeScript a FastAPI de Python con soporte completo para MCP.
+Una implementación basada en FastAPI del servidor Model Context Protocol (MCP) para gestión de grafos de conocimiento.
 
-## Estructura del proyecto
+## Descripción
+
+Este es un servidor MCP completo que proporciona capacidades de gestión de grafos de conocimiento a través de una interfaz API REST. Soporta todas las operaciones estándar de MCP para crear, leer, actualizar y eliminar entidades, relaciones y observaciones en un grafo de conocimiento.
+
+## Características
+
+- **Soporte Completo del Protocolo MCP**: Implementación completa de operaciones MCP
+- **API REST**: Endpoints REST limpios basados en FastAPI
+- **Gestión de Grafos de Conocimiento**: Entidades, relaciones y observaciones
+- **Capacidades de Búsqueda**: Encontrar nodos por palabras clave y categorías
+- **Persistencia de Datos**: Almacenamiento basado en archivos JSON
+- **Validación de Entrada**: Modelos Pydantic para validación de request/response
+- **Documentación Automática**: Integración con Swagger UI y ReDoc
+- **Arquitectura Modular**: Organizado con routers de FastAPI
+
+## Inicio Rápido
+
+### Instalación
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/juanesteban-valdesospina-agencycic/fastapi_mcp_memoria.git
+cd fastapi_mcp_memoria
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Ejecutar el servidor
+python main.py
+```
+
+El servidor estará disponible en `http://localhost:8000`
+
+### Configuración MCP
+
+Agregar al archivo de configuración `mcp.json`:
+
+```json
+{
+  "servers": {
+    "memory_http": {
+      "url": "http://0.0.0.0:8000/mcp",
+      "type": "http"
+    }
+  }
+}
+```
+
+## Estructura del Proyecto
 
 ```
 mcp_memoria/
-├── main.py                     # Aplicación FastAPI principal
-├── models.py                   # Modelos Pydantic y dataclasses
-├── knowledge_graph_manager.py  # Lógica de manejo del grafo
-├── requirements.txt            # Dependencias Python
-├── README.md                   # Esta documentación
-├── memory.json                 # Archivo de persistencia (se crea automáticamente)
-└── enrutadores/               # Routers organizados por funcionalidad
+├── main.py                     # Punto de entrada de la aplicación FastAPI
+├── models.py                   # Modelos Pydantic y clases de datos
+├── knowledge_graph_manager.py  # Lógica central del grafo de conocimiento
+├── requirements.txt            # Dependencias de Python
+├── README.md                   # Documentación del proyecto
+├── memory.json                 # Archivo de persistencia (auto-generado)
+└── enrutadores/               # Routers de FastAPI por funcionalidad
     ├── __init__.py
     ├── crear.py               # Endpoints de creación
     ├── obtener.py             # Endpoints de consulta
     └── eliminar.py            # Endpoints de eliminación
 ```
 
-## Características
+## API Endpoints
 
-- **API REST completa** para gestión de grafos de conocimiento
-- **Soporte MCP nativo** con FastAPI-MCP
-- **Organización modular** con routers separados
-- **Operation IDs** definidos para cada endpoint (requerido por MCP)
-- **Gestión de entidades, relaciones y observaciones**
-- **Búsqueda y filtrado de nodos**
-- **Persistencia en archivo JSON**
-- **Validación de datos con Pydantic**
-- **Documentación automática con Swagger**
+### Operaciones de Creación (`/crear`)
+- `POST /crear/entities` - Crear nuevas entidades
+- `POST /crear/relations` - Crear nuevas relaciones  
+- `POST /crear/observations` - Añadir observaciones a entidades existentes
 
-## Instalación
+### Operaciones de Consulta (`/obtener`)
+- `GET /obtener/graph` - Obtener todo el grafo de conocimiento
+- `POST /obtener/search` - Buscar nodos por consulta
+- `POST /obtener/nodes` - Obtener nodos específicos por nombre
 
-1. Instalar dependencias:
-```bash
-pip install -r requirements.txt
-```
+### Operaciones de Eliminación (`/eliminar`)
+- `POST /eliminar/entities` - Eliminar entidades
+- `POST /eliminar/observations` - Eliminar observaciones específicas
+- `POST /eliminar/relations` - Eliminar relaciones
 
-2. Ejecutar el servidor:
-```bash
-python main.py
-```
-
-O con uvicorn directamente:
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-## Endpoints MCP disponibles
-
-### Router: Crear (`/crear`)
-- `POST /crear/entities` (operation_id: `create_entities`) - Crear nuevas entidades
-- `POST /crear/relations` (operation_id: `create_relations`) - Crear nuevas relaciones
-- `POST /crear/observations` (operation_id: `add_observations`) - Añadir observaciones
-
-### Router: Obtener (`/obtener`)
-- `GET /obtener/graph` (operation_id: `read_graph`) - Leer todo el grafo
-- `POST /obtener/search` (operation_id: `search_nodes`) - Buscar nodos
-- `POST /obtener/nodes` (operation_id: `open_nodes`) - Obtener nodos específicos
-
-### Router: Eliminar (`/eliminar`)
-- `POST /eliminar/entities` (operation_id: `delete_entities`) - Eliminar entidades
-- `POST /eliminar/observations` (operation_id: `delete_observations`) - Eliminar observaciones
-- `POST /eliminar/relations` (operation_id: `delete_relations`) - Eliminar relaciones
-
-### Endpoints adicionales
+### Endpoints de Sistema
 - `GET /` - Información del servidor
-- `GET /health` - Estado del servidor
+- `GET /health` - Estado de salud del sistema
 
-## Configuración MCP
+## Ejemplos de Uso
 
-El servidor está configurado con FastAPI-MCP y expone las siguientes operaciones MCP:
+### Crear Entidades
 
-```python
-mcp = FastApiMCP(
-    app, 
-    include_operations=[
-        "read_graph",
-        "search_nodes", 
-        "open_nodes",
-        "create_entities",
-        "create_relations",
-        "add_observations",
-        "delete_entities",
-        "delete_observations",
-        "delete_relations"
-    ]
-)
-```
-
-## Documentación
-
-Una vez ejecutando el servidor, puedes acceder a:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Variables de entorno
-
-- `MEMORY_FILE_PATH`: Ruta del archivo de memoria (por defecto: memory.json en el directorio del script)
-
-## Ejemplos de uso
-
-### Crear entidades
 ```bash
-curl -X POST "http://localhost:8000/create_entities" \
+curl -X POST "http://localhost:8000/crear/entities" \
   -H "Content-Type: application/json" \
   -d '{
     "entities": [
       {
-        "name": "Juan",
+        "name": "Juan Pérez",
         "entityType": "persona",
-        "observations": ["Es desarrollador", "Vive en Madrid"]
+        "observations": ["Desarrollador de software", "Vive en Madrid"]
       }
     ]
   }'
 ```
 
-### Crear relaciones
+### Crear Relaciones
+
 ```bash
-curl -X POST "http://localhost:8000/create_relations" \
+curl -X POST "http://localhost:8000/crear/relations" \
   -H "Content-Type: application/json" \
   -d '{
     "relations": [
       {
-        "from": "Juan",
+        "from": "Juan Pérez",
         "to": "Madrid",
         "relationType": "vive_en"
       }
@@ -132,22 +122,59 @@ curl -X POST "http://localhost:8000/create_relations" \
   }'
 ```
 
-### Buscar nodos
+### Buscar Nodos
+
 ```bash
-curl -X POST "http://localhost:8000/search_nodes" \
+curl -X POST "http://localhost:8000/obtener/search" \
   -H "Content-Type: application/json" \
-  -d '{
-    "query": "desarrollador"
-  }'
+  -d '{"query": "desarrollador"}'
 ```
 
-## Diferencias con la versión TypeScript
+### Obtener Grafo Completo
 
-1. **Estructura de datos**: Se usan dataclasses de Python en lugar de interfaces de TypeScript
-2. **Validación**: Pydantic para validación de entrada en lugar de esquemas JSON
-3. **API**: REST endpoints en lugar de herramientas MCP
-4. **Manejo de errores**: HTTPException de FastAPI
-5. **Documentación**: Swagger UI automático
-6. **Serializción**: Conversión manual a diccionarios para JSON
+```bash
+curl -X GET "http://localhost:8000/obtener/graph"
+```
 
-La funcionalidad core permanece idéntica, solo cambia la interfaz de comunicación.
+## Configuración
+
+### Variables de Entorno
+
+- `MEMORY_FILE_PATH`: Ruta del archivo de persistencia (por defecto: `memory.json`)
+
+### Documentación
+
+Una vez que el servidor esté ejecutándose, puedes acceder a:
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **Health Check**: http://localhost:8000/health
+
+## Desarrollo
+
+### Requisitos
+
+- Python 3.8+
+- FastAPI
+- Pydantic
+- fastapi-mcp
+
+### Ejecutar en Modo Desarrollo
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## Arquitectura
+
+El servidor utiliza una arquitectura modular con:
+
+- **FastAPI-MCP**: Integración nativa con el protocolo MCP
+- **Routers modulares**: Separación de responsabilidades por funcionalidad
+- **Modelos Pydantic**: Validación automática de datos
+- **Persistencia JSON**: Almacenamiento simple y legible
+- **Operation IDs**: Requeridos para compatibilidad MCP
+
+
+
+
