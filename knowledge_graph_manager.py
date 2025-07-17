@@ -119,28 +119,28 @@ class KnowledgeGraphManager:
         await self.save_graph(graph)
         return new_relations
     
-    async def add_observations(self, observations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        graph = await self.load_graph()
-        results = []
+    # async def add_observations(self, observations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    #     graph = await self.load_graph()
+    #     results = []
         
-        for obs in observations:
-            entity_name = obs['entityName']
-            # Handle both 'contents' and 'observations' keys for compatibility
-            contents = obs.get('contents', obs.get('observations', []))
+    #     for obs in observations:
+    #         entity_name = obs['entityName']
+    #         # Handle both 'contents' and 'observations' keys for compatibility
+    #         contents = obs.get('contents', obs.get('observations', []))
             
-            entity = next((e for e in graph.entities if e.name == entity_name), None)
-            if not entity:
-                raise HTTPException(status_code=404, detail=f"Entity with name {entity_name} not found")
+    #         entity = next((e for e in graph.entities if e.name == entity_name), None)
+    #         if not entity:
+    #             raise HTTPException(status_code=404, detail=f"Entity with name {entity_name} not found")
             
-            new_observations = [c for c in contents if c not in entity.observations]
-            entity.observations.extend(new_observations)
-            results.append({
-                "entityName": entity_name,
-                "addedObservations": new_observations
-            })
+    #         new_observations = [c for c in contents if c not in entity.observations]
+    #         entity.observations.extend(new_observations)
+    #         results.append({
+    #             "entityName": entity_name,
+    #             "addedObservations": new_observations
+    #         })
         
-        await self.save_graph(graph)
-        return results
+    #     await self.save_graph(graph)
+    #     return results
     
     async def delete_entities(self, entity_names: List[str]) -> None:
         graph = await self.load_graph()
@@ -151,21 +151,21 @@ class KnowledgeGraphManager:
         ]
         await self.save_graph(graph)
     
-    async def delete_observations(self, deletions: List[Dict[str, Any]]) -> None:
-        graph = await self.load_graph()
+    # async def delete_observations(self, deletions: List[Dict[str, Any]]) -> None:
+    #     graph = await self.load_graph()
         
-        for deletion in deletions:
-            entity_name = deletion['entityName']
-            observations_to_delete = deletion['observations']
+    #     for deletion in deletions:
+    #         entity_name = deletion['entityName']
+    #         observations_to_delete = deletion['observations']
             
-            entity = next((e for e in graph.entities if e.name == entity_name), None)
-            if entity:
-                entity.observations = [
-                    o for o in entity.observations 
-                    if o not in observations_to_delete
-                ]
+    #         entity = next((e for e in graph.entities if e.name == entity_name), None)
+    #         if entity:
+    #             entity.observations = [
+    #                 o for o in entity.observations 
+    #                 if o not in observations_to_delete
+    #             ]
         
-        await self.save_graph(graph)
+    #     await self.save_graph(graph)
     
     async def delete_relations(self, relations: List[Relation]) -> None:
         graph = await self.load_graph()
