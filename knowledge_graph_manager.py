@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 from dataclasses import dataclass, asdict
 from fastapi import HTTPException
+from models import DeletionItem
 
 # Define memory file path using environment variable with fallback
 script_dir = Path(__file__).parent
@@ -119,28 +120,70 @@ class KnowledgeGraphManager:
         await self.save_graph(graph)
         return new_relations
     
-    # async def add_observations(self, observations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    #     graph = await self.load_graph()
-    #     results = []
+
+    async def add_observations(self, observations_to_add: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        graph = await self.load_graph()
         
-    #     for obs in observations:
-    #         entity_name = obs['entityName']
-    #         # Handle both 'contents' and 'observations' keys for compatibility
-    #         contents = obs.get('contents', obs.get('observations', []))
-            
-    #         entity = next((e for e in graph.entities if e.name == entity_name), None)
-    #         if not entity:
-    #             raise HTTPException(status_code=404, detail=f"Entity with name {entity_name} not found")
-            
-    #         new_observations = [c for c in contents if c not in entity.observations]
-    #         entity.observations.extend(new_observations)
-    #         results.append({
-    #             "entityName": entity_name,
-    #             "addedObservations": new_observations
-    #         })
+        # Para una búsqueda más rápida, creamos un mapa de nombre de entidad a objeto entidad.
+        entity_map = {e.name: e for e in graph.entities}
         
-    #     await self.save_graph(graph)
-    #     return results
+        results = []
+        entities_modified = False
+
+        for item in observations_to_add:
+            entity_name = item.get("entityName")
+            new_obs_list = item.get("observations", [])
+
+            # --- Validación de la entrada ---
+            if not entity_name:
+                results.append({
+                    "entityName": "DESCONOCIDO",
+                    "status": "fallido",
+                    "error": "El campo 'entityName' es obligatorio."
+                })
+                continue # Pasa al siguiente item
+
+            if not isinstance(new_obs_list, list):
+                results.append({
+                    "entityName": entity_name,
+                    "status": "fallido",
+                    "error": f"El campo 'observations' debe ser una lista, pero se recibió un {type(new_obs_list).__name__}."
+                })
+                continue
+
+            # --- Lógica de negocio ---
+            entity = entity_map.get(entity_name)
+
+            if not entity:
+                results.append({
+                    "entityName": entity_name,
+                    "status": "fallido",
+                    "error": f"La entidad '{entity_name}' no fue encontrada en el grafo."
+                })
+                continue
+            
+            # Filtra observaciones que ya existen para evitar duplicados.
+            # Usar un set para la comprobación es más eficiente (O(1) en promedio).
+            existing_obs_set = set(entity.observations)
+            truly_new_observations = [obs for obs in new_obs_list if obs not in existing_obs_set]
+
+            if truly_new_observations:
+                entity.observations.extend(truly_new_observations)
+                entities_modified = True
+            
+            results.append({
+                "entityName": entity_name,
+                "status": "exitoso",
+                "addedObservations": truly_new_observations,
+                "totalObservations": len(entity.observations)
+            })
+
+        # Guarda el grafo una sola vez al final, y solo si se hizo algún cambio.
+        if entities_modified:
+            await self.save_graph(graph)
+            
+        return results    
+    
     
     async def delete_entities(self, entity_names: List[str]) -> None:
         graph = await self.load_graph()
@@ -151,21 +194,63 @@ class KnowledgeGraphManager:
         ]
         await self.save_graph(graph)
     
-    # async def delete_observations(self, deletions: List[Dict[str, Any]]) -> None:
-    #     graph = await self.load_graph()
-        
-    #     for deletion in deletions:
-    #         entity_name = deletion['entityName']
-    #         observations_to_delete = deletion['observations']
-            
-    #         entity = next((e for e in graph.entities if e.name == entity_name), None)
-    #         if entity:
-    #             entity.observations = [
-    #                 o for o in entity.observations 
-    #                 if o not in observations_to_delete
-    #             ]
-        
-    #     await self.save_graph(graph)
+    async def delete_observations(self, deletions: List[DeletionItem]) -> List[dict]:
+        graph = await self.load_graph()
+        entity_map = {e.name: e for e in graph.entities}
+        results = []
+        graph_modified = False
+
+        for item in deletions:
+            entity_name = item.entityName
+            observations_to_delete = item.observations
+
+            # --- Validación de la entrada ---
+            if not entity_name:
+                results.append({
+                    "entityName": "DESCONOCIDO",
+                    "status": "fallido",
+                    "error": "El campo 'entityName' es obligatorio."
+                })
+                continue
+
+            if not isinstance(observations_to_delete, list):
+                results.append({
+                    "entityName": entity_name,
+                    "status": "fallido",
+                    "error": f"El campo 'observations' debe ser una lista, pero se recibió un {type(observations_to_delete).__name__}."
+                })
+                continue
+
+            # --- Lógica de negocio ---
+            entity = entity_map.get(entity_name)
+
+            if not entity:
+                results.append({
+                    "entityName": entity_name,
+                    "status": "fallido",
+                    "error": f"La entidad '{entity_name}' no fue encontrada en el grafo."
+                })
+                continue
+
+            delete_set = set(observations_to_delete)
+            initial_obs_count = len(entity.observations)
+            entity.observations = [obs for obs in entity.observations if obs not in delete_set]
+            final_obs_count = len(entity.observations)
+
+            if initial_obs_count != final_obs_count:
+                graph_modified = True
+
+            results.append({
+                "entityName": entity_name,
+                "status": "exitoso",
+                "observationsDeleted": initial_obs_count - final_obs_count,
+                "observationsRemaining": final_obs_count
+            })
+
+        if graph_modified:
+            await self.save_graph(graph)
+
+        return results
     
     async def delete_relations(self, relations: List[Relation]) -> None:
         graph = await self.load_graph()

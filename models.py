@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Pydantic models for API
 class EntityModel(BaseModel):
@@ -20,14 +20,19 @@ class CreateEntitiesRequest(BaseModel):
 class CreateRelationsRequest(BaseModel):
     relations: List[RelationModel]
 
+
 class AddObservationsRequest(BaseModel):
-    observations: List[Dict[str, Any]]  # entityName and contents
+    observations: List[Dict[str, Any]]
 
 class DeleteEntitiesRequest(BaseModel):
     entityNames: List[str]
 
+class DeletionItem(BaseModel):
+    entityName: str
+    observations: List[str] = Field(..., description="Lista de observaciones a eliminar")
+
 class DeleteObservationsRequest(BaseModel):
-    deletions: List[Dict[str, Any]]  # entityName and observations
+    deletions: List[DeletionItem]
 
 class DeleteRelationsRequest(BaseModel):
     relations: List[RelationModel]

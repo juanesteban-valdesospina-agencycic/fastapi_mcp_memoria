@@ -29,8 +29,9 @@ async def create_relations(request: CreateRelationsRequest):
     result = await knowledge_graph_manager.create_relations(relations)
     return [to_dict(relation) for relation in result]
 
-# @router.post("/observations", operation_id="add_observations")
-# async def add_observations(request: AddObservationsRequest):
-#     """Agregar nuevas observaciones a entidades existentes en el grafo de conocimiento"""
-#     result = await knowledge_graph_manager.add_observations(request.observations)
-#     return result
+@router.post("/observations", operation_id="add_observations")
+async def add_observations(request: AddObservationsRequest):
+    """Agregar nuevas observaciones a entidades existentes en el grafo de conocimiento"""
+    print("Entre en add observations")
+    result = await knowledge_graph_manager.add_observations(request.observations)
+    return result

@@ -26,9 +26,9 @@ mcp = FastApiMCP(
         "open_nodes",
         "create_entities",
         "create_relations",
-        # "add_observations",
+        "add_observations",
         "delete_entities",
-        # "delete_observations",
+        "delete_observations",
         "delete_relations"
     ]
 )

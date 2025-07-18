@@ -11,11 +11,12 @@ async def delete_entities(request: DeleteEntitiesRequest):
     await knowledge_graph_manager.delete_entities(request.entityNames)
     return {"message": "Entities deleted successfully"}
 
-# @router.post("/observations", operation_id="delete_observations")
-# async def delete_observations(request: DeleteObservationsRequest):
-#     """Eliminar observaciones específicas de entidades en el grafo de conocimiento"""
-#     await knowledge_graph_manager.delete_observations(request.deletions)
-#     return {"message": "Observations deleted successfully"}
+@router.post("/observations", operation_id="delete_observations")
+async def delete_observations(request: DeleteObservationsRequest):
+    """Eliminar observaciones específicas de entidades en el grafo de conocimiento"""
+    results = await knowledge_graph_manager.delete_observations(request.deletions)
+    # 2. Devuelve directamente los resultados detallados que el manager generó.
+    return {"results": results}
 
 @router.post("/relations", operation_id="delete_relations")
 async def delete_relations(request: DeleteRelationsRequest):
